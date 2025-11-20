@@ -1,0 +1,97 @@
+@{
+    ViewBag.Title = "Crear Usuario";
+}
+
+<div class="container">
+    <h2>Crear Usuario</h2>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <form id="formCrear">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre Completo *</label>
+                            <input type="text" class="form-control" id="nombreCompleto" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Correo Electrónico *</label>
+                            <input type="email" class="form-control" id="correo" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Contraseña *</label>
+                            <input type="password" class="form-control" id="contrasena" required minlength="6" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Identificación</label>
+                            <input type="text" class="form-control" id="identificacion" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Rol *</label>
+                            <select class="form-select" id="rolId" required>
+                                <option value="">Seleccione un rol...</option>
+                            </select>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            cargarRoles();
+
+            $('#formCrear').submit(function (e) {
+                e.preventDefault();
+                guardarUsuario();
+            });
+        });
+
+        function cargarRoles() {
+            $.get('/api/roles', function (roles) {
+                var select = $('#rolId');
+                roles.forEach(function (rol) {
+                    select.append('<option value="' + rol.rolId + '">' + rol.nombre + '</option>');
+                });
+            });
+        }
+
+        function guardarUsuario() {
+            var datos = {
+                nombreCompleto: $('#nombreCompleto').val(),
+                correo: $('#correo').val(),
+                contrasena: $('#contrasena').val(),
+                identificacion: $('#identificacion').val(),
+                rolId: parseInt($('#rolId').val()),
+                usuarioCreadorId: @(Session["UsuarioId"] ?? 0)
+            };
+
+            $.ajax({
+                url: '/api/usuarios',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(datos),
+                success: function () {
+                    alert('Usuario creado exitosamente');
+                    window.location.href = '/Usuarios/Index';
+                },
+                error: function (xhr) {
+                    alert('Error: ' + (xhr.responseJSON?.message || 'No se pudo crear el usuario'));
+                }
+            });
+        }
+    </script>
+}

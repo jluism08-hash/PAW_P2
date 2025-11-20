@@ -1,0 +1,106 @@
+@{
+    ViewBag.Title = "Editar Usuario";
+}
+
+<div class="container">
+    <h2>Editar Usuario</h2>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <form id="formEditar">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre Completo *</label>
+                            <input type="text" class="form-control" id="nombreCompleto" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Correo Electrónico *</label>
+                            <input type="email" class="form-control" id="correo" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Identificación</label>
+                            <input type="text" class="form-control" id="identificacion" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Rol *</label>
+                            <select class="form-select" id="rolId" required>
+                                <option value="">Seleccione un rol...</option>
+                            </select>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Actualizar</button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        var usuarioId = @ViewBag.UsuarioId;
+        var usuarioActualId = @(Session["UsuarioId"] ?? 0);
+
+        $(document).ready(function () {
+            cargarDatos();
+
+            $('#formEditar').submit(function (e) {
+                e.preventDefault();
+                actualizarUsuario();
+            });
+        });
+
+        function cargarDatos() {
+            // Cargar roles primero, luego el usuario
+            $.get('/api/roles', function (roles) {
+                var select = $('#rolId');
+                roles.forEach(function (rol) {
+                    select.append('<option value="' + rol.rolId + '">' + rol.nombre + '</option>');
+                });
+                // Después de cargar roles, cargar usuario
+                cargarUsuario();
+            });
+        }
+
+        function cargarUsuario() {
+            $.get('/api/usuarios/' + usuarioId, function (usuario) {
+                $('#nombreCompleto').val(usuario.nombreCompleto);
+                $('#correo').val(usuario.correo);
+                $('#identificacion').val(usuario.identificacion);
+                $('#rolId').val(usuario.rolId);
+            });
+        }
+
+        function actualizarUsuario() {
+            var datos = {
+                nombreCompleto: $('#nombreCompleto').val(),
+                correo: $('#correo').val(),
+                identificacion: $('#identificacion').val(),
+                rolId: parseInt($('#rolId').val()),
+                usuarioModificadorId: usuarioActualId
+            };
+
+            $.ajax({
+                url: '/api/usuarios/' + usuarioId,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(datos),
+                success: function () {
+                    alert('Usuario actualizado exitosamente');
+                    window.location.href = '/Usuarios/Index';
+                },
+                error: function (xhr) {
+                    alert('Error: ' + (xhr.responseJSON?.message || 'No se pudo actualizar el usuario'));
+                }
+            });
+        }
+    </script>
+}

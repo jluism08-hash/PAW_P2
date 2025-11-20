@@ -1,0 +1,116 @@
+﻿@{
+    ViewBag.Title = "Inicio";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Bienvenido al Sistema Académico</h2>
+            <p class="lead">Sistema de gestión de progreso académico de estudiantes</p>
+        </div>
+    </div>
+
+    @if (Request.IsAuthenticated)
+    {
+        <div class="row mt-4">
+            @if (Session["RolUsuario"]?.ToString() == "Administrador")
+            {
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-primary text-white h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Usuarios</h5>
+                            <p class="card-text">Gestionar usuarios y roles del sistema</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="@Url.Action("Index", "Usuarios")" class="btn btn-light btn-sm">Ir a Usuarios</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-success text-white h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Cursos</h5>
+                            <p class="card-text">Administrar oferta académica</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="@Url.Action("Index", "Cursos")" class="btn btn-light btn-sm">Ir a Cursos</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-info text-white h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Historial</h5>
+                            <p class="card-text">Consultar historial de estudiantes</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="@Url.Action("Index", "Historial")" class="btn btn-light btn-sm">Ir a Historial</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-warning text-dark h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Bitácora</h5>
+                            <p class="card-text">Auditoría del sistema</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="@Url.Action("Index", "Bitacora")" class="btn btn-dark btn-sm">Ir a Bitácora</a>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (Session["RolUsuario"]?.ToString() == "Docente")
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card bg-success text-white h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Mis Cursos</h5>
+                            <p class="card-text">Ver cursos asignados</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="@Url.Action("Index", "Cursos")" class="btn btn-light btn-sm">Ir a Cursos</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card bg-info text-white h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Historial</h5>
+                            <p class="card-text">Consultar estudiantes</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="@Url.Action("Index", "Historial")" class="btn btn-light btn-sm">Buscar Estudiante</a>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (Session["RolUsuario"]?.ToString() == "Estudiante")
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card bg-info text-white h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Mi Historial Académico</h5>
+                            <p class="card-text">Ver mi rendimiento y calificaciones</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="@Url.Action("MiHistorial", "Historial")" class="btn btn-light btn-sm">Ver Historial</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row mt-4">
+            <div class="col-md-6 offset-md-3">
+                <div class="alert alert-info">
+                    <h5>Por favor inicie sesión</h5>
+                    <p>Debe iniciar sesión para acceder a las funcionalidades del sistema.</p>
+                    <a href="@Url.Action("Login", "Cuenta")" class="btn btn-primary">Iniciar Sesión</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

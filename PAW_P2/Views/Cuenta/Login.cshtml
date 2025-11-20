@@ -1,0 +1,51 @@
+@model PAW_P2.Controllers.LoginModel
+@{
+    ViewBag.Title = "Iniciar Sesión";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0">Sistema Académico</h4>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title text-center mb-4">Iniciar Sesión</h5>
+
+                @using (Html.BeginForm("Login", "Cuenta", FormMethod.Post, new { @class = "needs-validation" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+
+                    <div class="mb-3">
+                        <label for="Correo" class="form-label">Correo Electrónico</label>
+                        @Html.TextBoxFor(m => m.Correo, new { @class = "form-control", placeholder = "correo@ejemplo.com", required = "required" })
+                        @Html.ValidationMessageFor(m => m.Correo, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Contrasena" class="form-label">Contraseña</label>
+                        @Html.PasswordFor(m => m.Contrasena, new { @class = "form-control", placeholder = "********", required = "required" })
+                        @Html.ValidationMessageFor(m => m.Contrasena, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        @Html.CheckBoxFor(m => m.Recordarme, new { @class = "form-check-input" })
+                        @Html.LabelFor(m => m.Recordarme, new { @class = "form-check-label" })
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Ingresar</button>
+                    </div>
+                }
+
+                <hr />
+                <p class="text-muted text-center small">
+                    Usuario de prueba: admin@sistema.edu<br />
+                    Contraseña: Admin123!
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

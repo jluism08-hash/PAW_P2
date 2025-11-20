@@ -1,0 +1,61 @@
+@{
+    ViewBag.Title = "Detalle de Bitácora";
+}
+
+<div class="container">
+    <h2>Detalle del Registro</h2>
+    <hr />
+
+    <div class="card">
+        <div class="card-body" id="detalle">
+            <p class="text-center">Cargando...</p>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="@Url.Action("Index")" class="btn btn-secondary">Volver</a>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        var bitacoraId = @ViewBag.BitacoraId;
+
+        $(document).ready(function () {
+            $.get('/api/bitacora/' + bitacoraId, function (r) {
+                var fecha = new Date(r.fechaHora).toLocaleString();
+                var html = '<div class="row">' +
+                    '<div class="col-md-6">' +
+                    '<p><strong>ID:</strong> ' + r.bitacoraId + '</p>' +
+                    '<p><strong>Fecha/Hora:</strong> ' + fecha + '</p>' +
+                    '<p><strong>Usuario:</strong> ' + r.nombreUsuario + '</p>' +
+                    '<p><strong>Acción:</strong> <span class="badge bg-info">' + r.accion + '</span></p>' +
+                    '<p><strong>Módulo:</strong> ' + r.modulo + '</p>' +
+                    '</div>' +
+                    '<div class="col-md-6">' +
+                    '<p><strong>Dirección IP:</strong> ' + (r.direccionIP || '-') + '</p>' +
+                    '<p><strong>Navegador:</strong> ' + (r.navegador || '-') + '</p>' +
+                    '<p><strong>Entidad Afectada:</strong> ' + (r.entidadAfectada || '-') + '</p>' +
+                    '<p><strong>ID Entidad:</strong> ' + (r.entidadId || '-') + '</p>' +
+                    '</div>' +
+                    '</div>' +
+                    '<hr />' +
+                    '<p><strong>Descripción:</strong></p>' +
+                    '<p>' + (r.descripcion || '-') + '</p>';
+
+                if (r.datosAnteriores || r.datosNuevos) {
+                    html += '<hr /><div class="row">';
+                    if (r.datosAnteriores) {
+                        html += '<div class="col-md-6"><p><strong>Datos Anteriores:</strong></p><pre class="bg-light p-2">' + r.datosAnteriores + '</pre></div>';
+                    }
+                    if (r.datosNuevos) {
+                        html += '<div class="col-md-6"><p><strong>Datos Nuevos:</strong></p><pre class="bg-light p-2">' + r.datosNuevos + '</pre></div>';
+                    }
+                    html += '</div>';
+                }
+
+                $('#detalle').html(html);
+            });
+        });
+    </script>
+}

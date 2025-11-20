@@ -1,0 +1,96 @@
+@{
+    ViewBag.Title = "Registrar Calificación";
+}
+
+<div class="container">
+    <h2>Registrar Calificación</h2>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <form id="formCalificacion">
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Evaluación *</label>
+                            <select class="form-select" id="tipoEvaluacion" required>
+                                <option value="">Seleccione...</option>
+                                <option value="Tarea">Tarea</option>
+                                <option value="Examen">Examen</option>
+                                <option value="Proyecto">Proyecto</option>
+                                <option value="Participación">Participación</option>
+                                <option value="Quiz">Quiz</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <input type="text" class="form-control" id="descripcion" placeholder="Ej: Examen Parcial 1" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nota (0-100) *</label>
+                                <input type="number" class="form-control" id="nota" required min="0" max="100" step="0.01" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Porcentaje (%) *</label>
+                                <input type="number" class="form-control" id="porcentaje" required min="0" max="100" step="0.01" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observaciones" rows="2"></textarea>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                            <a href="javascript:history.back()" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        var cursoId = @ViewBag.CursoId;
+        var estudianteId = @ViewBag.EstudianteId;
+
+        $(document).ready(function () {
+            $('#formCalificacion').submit(function (e) {
+                e.preventDefault();
+                guardarCalificacion();
+            });
+        });
+
+        function guardarCalificacion() {
+            var datos = {
+                estudianteId: estudianteId,
+                cursoId: cursoId,
+                tipoEvaluacion: $('#tipoEvaluacion').val(),
+                descripcion: $('#descripcion').val(),
+                nota: parseFloat($('#nota').val()),
+                porcentaje: parseFloat($('#porcentaje').val()),
+                observaciones: $('#observaciones').val()
+            };
+
+            $.ajax({
+                url: '/api/historial/calificacion',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(datos),
+                success: function () {
+                    alert('Calificación registrada exitosamente');
+                    window.location.href = '/Cursos/Detalle/' + cursoId;
+                },
+                error: function (xhr) {
+                    alert('Error: ' + (xhr.responseJSON?.message || 'No se pudo registrar la calificación'));
+                }
+            });
+        }
+    </script>
+}

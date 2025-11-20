@@ -1,0 +1,116 @@
+@{
+    ViewBag.Title = "Editar Rol";
+}
+
+<div class="container">
+    <h2>Editar Rol</h2>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form id="formEditar">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nombre del Rol *</label>
+                                <input type="text" class="form-control" id="nombre" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Descripción</label>
+                                <input type="text" class="form-control" id="descripcion" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Permisos</label>
+                            <div id="listaPermisos" class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                <p class="text-center">Cargando permisos...</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Actualizar</button>
+                            <a href="@Url.Action("Roles")" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        var rolId = @ViewBag.RolId;
+        var permisosRol = [];
+
+        $(document).ready(function () {
+            cargarRol();
+
+            $('#formEditar').submit(function (e) {
+                e.preventDefault();
+                actualizarRol();
+            });
+        });
+
+        function cargarRol() {
+            $.get('/api/roles/' + rolId, function (rol) {
+                $('#nombre').val(rol.nombre);
+                $('#descripcion').val(rol.descripcion);
+                permisosRol = rol.permisos.map(function (p) { return p.permisoId; });
+                cargarPermisos();
+            });
+        }
+
+        function cargarPermisos() {
+            $.get('/api/roles/permisos', function (permisos) {
+                var contenedor = $('#listaPermisos');
+                contenedor.empty();
+
+                var moduloActual = '';
+                permisos.forEach(function (p) {
+                    if (p.modulo !== moduloActual) {
+                        contenedor.append('<h6 class="mt-2 mb-1">' + p.modulo + '</h6>');
+                        moduloActual = p.modulo;
+                    }
+                    var checked = permisosRol.includes(p.permisoId) ? ' checked' : '';
+                    contenedor.append(
+                        '<div class="form-check">' +
+                        '<input class="form-check-input" type="checkbox" value="' + p.permisoId + '" id="permiso' + p.permisoId + '"' + checked + '>' +
+                        '<label class="form-check-label" for="permiso' + p.permisoId + '">' + p.nombre + ' - ' + p.descripcion + '</label>' +
+                        '</div>'
+                    );
+                });
+            });
+        }
+
+        function actualizarRol() {
+            var permisosSeleccionados = [];
+            $('#listaPermisos input:checked').each(function () {
+                permisosSeleccionados.push(parseInt($(this).val()));
+            });
+
+            var datos = {
+                nombre: $('#nombre').val(),
+                descripcion: $('#descripcion').val(),
+                permisosIds: permisosSeleccionados,
+                usuarioModificadorId: @(Session["UsuarioId"] ?? 0)
+            };
+
+            $.ajax({
+                url: '/api/roles/' + rolId,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(datos),
+                success: function () {
+                    alert('Rol actualizado exitosamente');
+                    window.location.href = '/Usuarios/Roles';
+                },
+                error: function (xhr) {
+                    alert('Error: ' + (xhr.responseJSON?.message || 'No se pudo actualizar el rol'));
+                }
+            });
+        }
+    </script>
+}

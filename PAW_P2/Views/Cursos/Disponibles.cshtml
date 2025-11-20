@@ -1,0 +1,94 @@
+@{
+    ViewBag.Title = "Cursos Disponibles";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Cursos Disponibles para Matricula</h2>
+        <a href="@Url.Action("MisCursos")" class="btn btn-secondary">Volver a Mis Cursos</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Codigo</th>
+                            <th>Nombre</th>
+                            <th>Descripcion</th>
+                            <th>Creditos</th>
+                            <th>Cuatrimestre</th>
+                            <th>Docentes</th>
+                            <th>Estudiantes</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla">
+                        <tr>
+                            <td colspan="8" class="text-center">Cargando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        var estudianteId = @(Session["UsuarioId"] ?? 0);
+
+        $(document).ready(function () {
+            cargarCursosDisponibles();
+        });
+
+        function cargarCursosDisponibles() {
+            $.get('/api/cursos/disponibles/' + estudianteId, function (datos) {
+                var cuerpo = $('#cuerpoTabla');
+                cuerpo.empty();
+
+                if (datos.length === 0) {
+                    cuerpo.append('<tr><td colspan="8" class="text-center">No hay cursos disponibles para matricular</td></tr>');
+                    return;
+                }
+
+                datos.forEach(function (curso) {
+                    var fila = '<tr>' +
+                        '<td><strong>' + curso.codigo + '</strong></td>' +
+                        '<td>' + curso.nombre + '</td>' +
+                        '<td>' + (curso.descripcion || '-') + '</td>' +
+                        '<td>' + curso.creditos + '</td>' +
+                        '<td>' + curso.cuatrimestre + '</td>' +
+                        '<td><span class="badge bg-primary">' + curso.cantidadDocentes + '</span></td>' +
+                        '<td><span class="badge bg-secondary">' + curso.cantidadEstudiantes + '</span></td>' +
+                        '<td>' +
+                        '<button class="btn btn-sm btn-success" onclick="matricular(' + curso.cursoId + ')">Matricular</button>' +
+                        '</td>' +
+                        '</tr>';
+                    cuerpo.append(fila);
+                });
+            }).fail(function () {
+                $('#cuerpoTabla').html('<tr><td colspan="8" class="text-center text-danger">Error al cargar cursos</td></tr>');
+            });
+        }
+
+        function matricular(cursoId) {
+            if (confirm('¿Desea matricularse en este curso?')) {
+                $.ajax({
+                    url: '/api/cursos/' + cursoId + '/matricular',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ estudianteId: estudianteId }),
+                    success: function () {
+                        alert('Matricula realizada exitosamente');
+                        window.location.href = '/Cursos/MisCursos';
+                    },
+                    error: function (xhr) {
+                        alert('Error: ' + (xhr.responseJSON?.message || 'No se pudo realizar la matricula'));
+                    }
+                });
+            }
+        }
+    </script>
+}

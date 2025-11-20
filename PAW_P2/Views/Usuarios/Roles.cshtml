@@ -1,0 +1,81 @@
+@{
+    ViewBag.Title = "Gestión de Roles";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Roles y Permisos</h2>
+        <a href="@Url.Action("CrearRol")" class="btn btn-primary">Nuevo Rol</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Usuarios</th>
+                            <th>Fecha Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla">
+                        <tr>
+                            <td colspan="6" class="text-center">Cargando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            cargarRoles();
+        });
+
+        function cargarRoles() {
+            $.get('/api/roles', function (datos) {
+                var cuerpo = $('#cuerpoTabla');
+                cuerpo.empty();
+
+                datos.forEach(function (rol) {
+                    var fecha = new Date(rol.fechaCreacion).toLocaleDateString();
+                    var fila = '<tr>' +
+                        '<td>' + rol.rolId + '</td>' +
+                        '<td>' + rol.nombre + '</td>' +
+                        '<td>' + (rol.descripcion || '-') + '</td>' +
+                        '<td><span class="badge bg-secondary">' + rol.cantidadUsuarios + '</span></td>' +
+                        '<td>' + fecha + '</td>' +
+                        '<td>' +
+                        '<a href="/Usuarios/EditarRol/' + rol.rolId + '" class="btn btn-sm btn-warning">Editar</a> ' +
+                        '<button class="btn btn-sm btn-danger" onclick="eliminarRol(' + rol.rolId + ')">Eliminar</button>' +
+                        '</td>' +
+                        '</tr>';
+                    cuerpo.append(fila);
+                });
+            });
+        }
+
+        function eliminarRol(id) {
+            if (confirm('¿Está seguro de eliminar este rol?')) {
+                $.ajax({
+                    url: '/api/roles/' + id + '?usuarioEliminadorId=' + @(Session["UsuarioId"] ?? 0),
+                    type: 'DELETE',
+                    success: function () {
+                        alert('Rol eliminado exitosamente');
+                        cargarRoles();
+                    },
+                    error: function (xhr) {
+                        alert('Error: ' + (xhr.responseJSON?.message || 'No se pudo eliminar el rol'));
+                    }
+                });
+            }
+        }
+    </script>
+}

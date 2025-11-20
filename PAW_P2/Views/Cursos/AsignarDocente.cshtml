@@ -1,0 +1,81 @@
+@{
+    ViewBag.Title = "Asignar Docente";
+}
+
+<div class="container">
+    <h2>Asignar Docente al Curso</h2>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <form id="formAsignar">
+                        <div class="mb-3">
+                            <label class="form-label">Docente *</label>
+                            <select class="form-select" id="docenteId" required>
+                                <option value="">Seleccione un docente...</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Horario</label>
+                            <input type="text" class="form-control" id="horario" placeholder="Ej: Lunes 8:00-10:00" />
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Asignar</button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        var cursoId = @ViewBag.CursoId;
+
+        $(document).ready(function () {
+            cargarDocentes();
+
+            $('#formAsignar').submit(function (e) {
+                e.preventDefault();
+                asignarDocente();
+            });
+        });
+
+        function cargarDocentes() {
+            $.get('/api/usuarios/docentes', function (docentes) {
+                var select = $('#docenteId');
+                docentes.forEach(function (doc) {
+                    select.append('<option value="' + doc.usuarioId + '">' + doc.nombreCompleto + '</option>');
+                });
+            });
+        }
+
+        function asignarDocente() {
+            var datos = {
+                docenteId: parseInt($('#docenteId').val()),
+                horario: $('#horario').val(),
+                usuarioAsignadorId: @(Session["UsuarioId"] ?? 0)
+            };
+
+            $.ajax({
+                url: '/api/cursos/' + cursoId + '/asignar-docente',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(datos),
+                success: function () {
+                    alert('Docente asignado exitosamente');
+                    window.location.href = '/Cursos/Detalle/' + cursoId;
+                },
+                error: function (xhr) {
+                    alert('Error: ' + (xhr.responseJSON?.message || 'No se pudo asignar el docente'));
+                }
+            });
+        }
+    </script>
+}

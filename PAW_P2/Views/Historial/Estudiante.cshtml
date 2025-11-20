@@ -1,0 +1,168 @@
+@{
+    ViewBag.Title = "Historial del Estudiante";
+}
+
+<div class="container-fluid">
+    <h2>Historial Académico</h2>
+    <hr />
+
+    <!-- Información del Estudiante -->
+    <div class="card mb-4">
+        <div class="card-body" id="infoEstudiante">
+            <p class="text-center">Cargando información del estudiante...</p>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Rendimiento por Cuatrimestre</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="graficoPromedios" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Notas por Tipo</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="graficoPorTipo" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Historial -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Cursos y Calificaciones</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Código</th>
+                            <th>Curso</th>
+                            <th>Cuatrimestre</th>
+                            <th>Créditos</th>
+                            <th>Nota Final</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaHistorial">
+                        <tr><td colspan="6" class="text-center">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="@Url.Action("Index")" class="btn btn-secondary">Volver</a>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var estudianteId = @ViewBag.EstudianteId;
+        var graficoPromedios = null;
+        var graficoPorTipo = null;
+
+        $(document).ready(function () {
+            cargarHistorial();
+            cargarGraficos();
+        });
+
+        function cargarHistorial() {
+            $.get('/api/historial/estudiante/' + estudianteId, function (data) {
+                // Info del estudiante
+                var est = data.estudiante;
+                $('#infoEstudiante').html(
+                    '<div class="row">' +
+                    '<div class="col-md-4"><strong>Nombre:</strong> ' + est.nombreCompleto + '</div>' +
+                    '<div class="col-md-4"><strong>Identificación:</strong> ' + (est.identificacion || '-') + '</div>' +
+                    '<div class="col-md-4"><strong>Correo:</strong> ' + est.correo + '</div>' +
+                    '</div>'
+                );
+
+                // Tabla de historial
+                var tbody = $('#tablaHistorial');
+                tbody.empty();
+
+                if (data.historial.length === 0) {
+                    tbody.append('<tr><td colspan="6" class="text-center">No hay cursos registrados</td></tr>');
+                    return;
+                }
+
+                data.historial.forEach(function (h) {
+                    var estado = h.aprobado === true ? '<span class="badge bg-success">Aprobado</span>' :
+                                 h.aprobado === false ? '<span class="badge bg-danger">Reprobado</span>' :
+                                 '<span class="badge bg-warning">En curso</span>';
+                    var nota = h.notaFinal ? h.notaFinal.toFixed(2) : '-';
+
+                    tbody.append('<tr>' +
+                        '<td><strong>' + h.codigo + '</strong></td>' +
+                        '<td>' + h.nombre + '</td>' +
+                        '<td>' + h.cuatrimestre + '</td>' +
+                        '<td>' + h.creditos + '</td>' +
+                        '<td>' + nota + '</td>' +
+                        '<td>' + estado + '</td>' +
+                        '</tr>');
+                });
+            });
+        }
+
+        function cargarGraficos() {
+            $.get('/api/historial/estudiante/' + estudianteId + '/grafico', function (data) {
+                // Gráfico de promedios por cuatrimestre
+                var ctx1 = document.getElementById('graficoPromedios').getContext('2d');
+                if (graficoPromedios) graficoPromedios.destroy();
+
+                graficoPromedios = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: data.promediosPorCuatrimestre.map(function (p) { return p.cuatrimestre; }),
+                        datasets: [{
+                            label: 'Promedio',
+                            data: data.promediosPorCuatrimestre.map(function (p) { return p.promedio; }),
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+
+                // Gráfico por tipo de evaluación
+                var ctx2 = document.getElementById('graficoPorTipo').getContext('2d');
+                if (graficoPorTipo) graficoPorTipo.destroy();
+
+                var colores = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+                graficoPorTipo = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.notasPorTipo.map(function (n) { return n.tipoEvaluacion; }),
+                        datasets: [{
+                            data: data.notasPorTipo.map(function (n) { return n.promedio; }),
+                            backgroundColor: colores
+                        }]
+                    }
+                });
+            });
+        }
+    </script>
+}

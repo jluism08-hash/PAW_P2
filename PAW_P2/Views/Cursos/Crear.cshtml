@@ -1,0 +1,93 @@
+@{
+    ViewBag.Title = "Crear Curso";
+}
+
+<div class="container">
+    <h2>Crear Curso</h2>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <form id="formCrear">
+                        <div class="mb-3">
+                            <label class="form-label">Código *</label>
+                            <input type="text" class="form-control" id="codigo" required maxlength="20" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nombre del Curso *</label>
+                            <input type="text" class="form-control" id="nombre" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" rows="3"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Créditos *</label>
+                                <input type="number" class="form-control" id="creditos" required min="1" max="10" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Cuatrimestre *</label>
+                                <select class="form-select" id="cuatrimestre" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="I-2024">I-2024</option>
+                                    <option value="II-2024">II-2024</option>
+                                    <option value="III-2024">III-2024</option>
+                                    <option value="I-2025">I-2025</option>
+                                    <option value="II-2025">II-2025</option>
+                                    <option value="III-2025">III-2025</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $('#formCrear').submit(function (e) {
+                e.preventDefault();
+                guardarCurso();
+            });
+        });
+
+        function guardarCurso() {
+            var datos = {
+                codigo: $('#codigo').val(),
+                nombre: $('#nombre').val(),
+                descripcion: $('#descripcion').val(),
+                creditos: parseInt($('#creditos').val()),
+                cuatrimestre: $('#cuatrimestre').val(),
+                usuarioCreadorId: @(Session["UsuarioId"] ?? 0)
+            };
+
+            $.ajax({
+                url: '/api/cursos',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(datos),
+                success: function () {
+                    alert('Curso creado exitosamente');
+                    window.location.href = '/Cursos/Index';
+                },
+                error: function (xhr) {
+                    alert('Error: ' + (xhr.responseJSON?.message || 'No se pudo crear el curso'));
+                }
+            });
+        }
+    </script>
+}

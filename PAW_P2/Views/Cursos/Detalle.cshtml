@@ -1,0 +1,124 @@
+@{
+    ViewBag.Title = "Detalle del Curso";
+}
+
+<div class="container">
+    <h2>Detalle del Curso</h2>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Información del Curso</h5>
+                </div>
+                <div class="card-body" id="infoCurso">
+                    <p class="text-center">Cargando...</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Docentes Asignados</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group" id="listaDocentes">
+                        <li class="list-group-item">Cargando...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Estudiantes Inscritos</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Identificación</th>
+                            <th>Nota Final</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaEstudiantes">
+                        <tr><td colspan="5" class="text-center">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="@Url.Action("Index")" class="btn btn-secondary">Volver</a>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        var cursoId = @ViewBag.CursoId;
+
+        $(document).ready(function () {
+            cargarCurso();
+            cargarEstudiantes();
+        });
+
+        function cargarCurso() {
+            $.get('/api/cursos/' + cursoId, function (curso) {
+                var info = '<p><strong>Código:</strong> ' + curso.codigo + '</p>' +
+                    '<p><strong>Nombre:</strong> ' + curso.nombre + '</p>' +
+                    '<p><strong>Descripción:</strong> ' + (curso.descripcion || '-') + '</p>' +
+                    '<p><strong>Créditos:</strong> ' + curso.creditos + '</p>' +
+                    '<p><strong>Cuatrimestre:</strong> ' + curso.cuatrimestre + '</p>';
+                $('#infoCurso').html(info);
+
+                // Cargar docentes
+                var lista = $('#listaDocentes');
+                lista.empty();
+                if (curso.docentes && curso.docentes.length > 0) {
+                    curso.docentes.forEach(function (doc) {
+                        lista.append('<li class="list-group-item d-flex justify-content-between">' +
+                            doc.nombreCompleto +
+                            '<span class="badge bg-info">' + (doc.horario || 'Sin horario') + '</span>' +
+                            '</li>');
+                    });
+                } else {
+                    lista.append('<li class="list-group-item">No hay docentes asignados</li>');
+                }
+            });
+        }
+
+        function cargarEstudiantes() {
+            $.get('/api/historial/curso/' + cursoId + '/estudiantes', function (estudiantes) {
+                var tbody = $('#tablaEstudiantes');
+                tbody.empty();
+
+                if (estudiantes.length === 0) {
+                    tbody.append('<tr><td colspan="5" class="text-center">No hay estudiantes inscritos</td></tr>');
+                    return;
+                }
+
+                estudiantes.forEach(function (est) {
+                    var estado = est.aprobado === true ? '<span class="badge bg-success">Aprobado</span>' :
+                                 est.aprobado === false ? '<span class="badge bg-danger">Reprobado</span>' :
+                                 '<span class="badge bg-warning">En curso</span>';
+                    var nota = est.notaFinal ? est.notaFinal.toFixed(2) : '-';
+
+                    tbody.append('<tr>' +
+                        '<td>' + est.nombreCompleto + '</td>' +
+                        '<td>' + (est.identificacion || '-') + '</td>' +
+                        '<td>' + nota + '</td>' +
+                        '<td>' + estado + '</td>' +
+                        '<td><a href="/Historial/RegistrarCalificacion?cursoId=' + cursoId + '&estudianteId=' + est.estudianteId + '" class="btn btn-sm btn-primary">Calificar</a></td>' +
+                        '</tr>');
+                });
+            });
+        }
+    </script>
+}

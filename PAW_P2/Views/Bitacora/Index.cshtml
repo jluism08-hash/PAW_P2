@@ -1,0 +1,161 @@
+@{
+    ViewBag.Title = "Bitácora del Sistema";
+}
+
+<div class="container-fluid">
+    <h2>Bitácora de Actividades</h2>
+    <hr />
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Usuario</label>
+                    <input type="text" class="form-control" id="filtroUsuario" placeholder="Nombre o correo" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Acción</label>
+                    <select class="form-select" id="filtroAccion">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Módulo</label>
+                    <select class="form-select" id="filtroModulo">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Fecha Inicio</label>
+                    <input type="date" class="form-control" id="fechaInicio" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Fecha Fin</label>
+                    <input type="date" class="form-control" id="fechaFin" />
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" onclick="buscar()">Buscar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Registros -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Fecha/Hora</th>
+                            <th>Usuario</th>
+                            <th>Acción</th>
+                            <th>Módulo</th>
+                            <th>Descripción</th>
+                            <th>IP</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla">
+                        <tr><td colspan="7" class="text-center">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            <nav>
+                <ul class="pagination justify-content-center" id="paginacion">
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        var paginaActual = 1;
+
+        $(document).ready(function () {
+            cargarFiltros();
+            cargarBitacora(1);
+        });
+
+        function cargarFiltros() {
+            $.get('/api/bitacora/acciones', function (acciones) {
+                var select = $('#filtroAccion');
+                acciones.forEach(function (a) {
+                    select.append('<option value="' + a + '">' + a + '</option>');
+                });
+            });
+
+            $.get('/api/bitacora/modulos', function (modulos) {
+                var select = $('#filtroModulo');
+                modulos.forEach(function (m) {
+                    select.append('<option value="' + m + '">' + m + '</option>');
+                });
+            });
+        }
+
+        function cargarBitacora(pagina) {
+            paginaActual = pagina;
+            var url = '/api/bitacora?pagina=' + pagina;
+
+            $.get(url, function (data) {
+                mostrarRegistros(data);
+            });
+        }
+
+        function buscar() {
+            var params = new URLSearchParams();
+            params.append('pagina', '1');
+
+            var usuario = $('#filtroUsuario').val();
+            var accion = $('#filtroAccion').val();
+            var modulo = $('#filtroModulo').val();
+            var fechaInicio = $('#fechaInicio').val();
+            var fechaFin = $('#fechaFin').val();
+
+            if (usuario) params.append('usuario', usuario);
+            if (accion) params.append('accion', accion);
+            if (modulo) params.append('modulo', modulo);
+            if (fechaInicio) params.append('fechaInicio', fechaInicio);
+            if (fechaFin) params.append('fechaFin', fechaFin);
+
+            $.get('/api/bitacora/buscar?' + params.toString(), function (data) {
+                mostrarRegistros(data);
+            });
+        }
+
+        function mostrarRegistros(data) {
+            var tbody = $('#cuerpoTabla');
+            tbody.empty();
+
+            if (data.registros.length === 0) {
+                tbody.append('<tr><td colspan="7" class="text-center">No hay registros</td></tr>');
+                return;
+            }
+
+            data.registros.forEach(function (r) {
+                var fecha = new Date(r.fechaHora).toLocaleString();
+                tbody.append('<tr>' +
+                    '<td>' + fecha + '</td>' +
+                    '<td>' + r.nombreUsuario + '</td>' +
+                    '<td><span class="badge bg-info">' + r.accion + '</span></td>' +
+                    '<td>' + r.modulo + '</td>' +
+                    '<td>' + (r.descripcion || '-') + '</td>' +
+                    '<td>' + (r.direccionIP || '-') + '</td>' +
+                    '<td><a href="/Bitacora/Detalle/' + r.bitacoraId + '" class="btn btn-sm btn-outline-primary">Ver</a></td>' +
+                    '</tr>');
+            });
+
+            // Paginación
+            var pag = $('#paginacion');
+            pag.empty();
+            for (var i = 1; i <= data.totalPaginas; i++) {
+                var activo = i === data.paginaActual ? ' active' : '';
+                pag.append('<li class="page-item' + activo + '"><a class="page-link" href="#" onclick="cargarBitacora(' + i + ')">' + i + '</a></li>');
+            }
+        }
+    </script>
+}
